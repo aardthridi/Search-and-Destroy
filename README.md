@@ -6,7 +6,9 @@ Search and Destroy was originally created by WinkleWinkle then picked up by Star
 
 There has been some controversy about S&D and whether the tool is legal to use. It is legal to use but is about as close to the line on being a "bot" as it is possible to get. If you modify it to automatically kill on room entry or complete campaigns / campaign mobs without manual intervention, you have crossed the line into botting. We very strongly recommend you become familiar with Aardwolf botting rules before using this tool.
 
-You are expected to be at-the-keyboard while actively playing Aardwolf.
+<b>A copy of the Aardwolf botting rules are included below for reference:</b>
+
+<pre>You are expected to be at-the-keyboard while actively playing Aardwolf.
 Any method which provides your character with meaningful gains, without 
 any direct interaction from you, is illegal.  This is true even if you're 
 at the keyboard and sitting in another window as your character is busy,
@@ -92,3 +94,4 @@ expect the same leniency.
 
 Remember, you can always send a tell to a visible immortal ('who imm') or
 write a note to imm on Personal forum if you have any questions.
+</pre>
