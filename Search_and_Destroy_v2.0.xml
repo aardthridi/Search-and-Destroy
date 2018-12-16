@@ -1,34 +1,46 @@
 <?xml version="1.0" encoding="iso-8859-1"?><!DOCTYPE muclient>
 <!-- Saved on Saturday, July 05, 2008, 4:46 PM -->
 <muclient>
-<plugin name="Search_and_Destroy_v2" version="2.0" id="20000000CEDD84F510B74715" date_written="2018-07-20 01:00:00" author="Starling" language="Lua" purpose="rock the casbah" save_state="y" requires="5.06" >
-<description trim="n">
-<![CDATA[
-	--[[ Search and Destroy version history:
-	--	 1.0  - WinkleWinkle	Original author of S&D, the first (and to this day, only) campaign accelerator to be publicly available.
-	--	 1.1  - Nokfah			Fixed compatibility issue when a mapper update rendered 1.0 inoperable.  Originally versioned "2.8".
-	--	 1.2  - Lunk			Briefly hosted in early 2017.  Banned on 27 Apr for unrelated reasons (trolling).
-	--	 1.3  - Starling		Active developer and problem fixer as of 1 Jun 2017.  v1.3.0 was the first true update (bugfixes 
-	--							and features) since S&D came out 9 years before.  Updates continued through v1.3.5.
-	--   2.0  - Starling		S&D unified into a single plugin, making it faster and more stable, and solving many problems.  
-	--
-	-- 	Happy hunting, ninjas. --]]
-]]>
-</description> </plugin>
-
+<plugin
+	name="Search_and_Destroy_v2" 
+	version="2.0" 
+	id="20000000CEDD84F510B74715" 
+	date_written="2018-07-20 01:00:00" 
+	author="Starling" 
+	language="Lua" 
+	purpose="rock the casbah" 
+	save_state="y" 
+	requires="5.06" 
+>
+	<description trim="n">
+	<![CDATA[
+		--[[ Search and Destroy version history:
+		--	 1.0  - WinkleWinkle	Original author of S&D, the first (and to this day, only) campaign accelerator to be publicly available.
+		--	 1.1  - Nokfah			Fixed compatibility issue when a mapper update rendered 1.0 inoperable.  Originally versioned "2.8".
+		--	 1.2  - Lunk			Briefly hosted in early 2017.  Banned on 27 Apr for unrelated reasons (trolling).
+		--	 1.3  - Starling		Active developer and problem fixer as of 1 Jun 2017.  v1.3.0 was the first true update (bugfixes 
+		--							and features) since S&D came out 9 years before.  Updates continued through v1.3.5.
+		--   2.0  - Starling		S&D unified into a single plugin, making it faster and more stable, and solving many problems.  
+		--
+		-- 	Happy hunting, ninjas. --]]
+	]]>
+	</description> 
+</plugin>
 <!-- Isolinear intermatrix (utility module) -->
 <include name="constants.lua"/>
-<variables><variable name="example"></variable></variables>
 <timers>
-	<timer name="tim_init_plugin"
+	<timer 
+		name="tim_init_plugin"
 		second="0.5" active_closed="y"
 		script="init_plugin" 
-		enabled="y" send_to="12" > </timer>
-		
-	<timer name="execute_in_area_timer"
+		enabled="y" send_to="12"
+	/>		
+	<timer 
+		name="execute_in_area_timer"
 		second="0.1" 
 		script="execute_in_area_tick"
-		enabled="n" > </timer>
+		enabled="n"
+	/>
 </timers>
 
 <script>
@@ -58,7 +70,6 @@
 -- [[ player status, cp eligibility, etc. ]]
 	local char_state = "1"		
 	local stat_cp = 0	-- 0 off cp, can get new; 1 off cp, must level; 2 on cp, must level to get new; 3 on cp, can get new at current
-	local stat_gq = 0	-- 0 off gq; 1 on gq, no winner yet; 2 on gq extended time,; 3 at win/mob limit
 	local stat_quest = 0	-- 0 off quest, no wait; 1 off quest, must wait; 2 on quest, mob not killed; 3 quest, mob killed
 	
 -- [[ Execute in area ]]
@@ -75,32 +86,14 @@
 	local cpstatus_can_get_new_cp = "no"
 	local player_on_cp = "no"
 	
--- [[ gquest data ]]
-	local current_gq_id = GetVariable("mcvar_current_gq_id") or ""
-	local gq_info_minlvl = tonumber(GetVariable("mcvar_gq_info_minlvl")) or 1
-	local gq_info_maxlvl = tonumber(GetVariable("mcvar_gq_info_maxlvl")) or 300
-	local gq_info_status =  GetVariable("mcvar_gq_info_status") or "none"
-	local gq_info_type = "none"
-	local gq_info_list = {}
-	local gq_check_list = {}
-	local last_gq_check = os.clock()
-	local gq_target_list = {}
-	
--- [[ gq status, etc.]]
-	local gq_started = "no"
-	local gq_extended = "no"
-	local player_on_gq = "no"
-
--- [[ current target data - cp, gq, quest ]]
+-- [[ current target data - cp, quest ]]
 	local xcp_index = 0
-	local xgq_index = 0
 	local quest_target = {}	-- {qmob = "", area = "", room = "", keyword="", status="0"}
 	local short_mob_name = "-1"
 	local full_mob_name = ""
 	
 -- [[ xcp, xgq action mode ]]
 	local xcp_action_mode = GetVariable("mcvar_xcp_action_mode") or "ht"
-	local xgq_action_mode = GetVariable("mcvar_xgq_action_mode") or "ht"
 	
 -- [[ goto/nx data ]]
 	local gotoList = {}
@@ -141,7 +134,7 @@
 	local windowinfo
 	local win_bgcolor = ColourNameToRGB("black")
 	local win_RESIZE_TAG_SIZE = 15		-- Size of the zone for resizing via drag
-	local win_active_tab = "cp"	-- valid tabs are q, cp, gq, settings, x
+	local win_active_tab = "cp"	-- valid tabs are q, cp, settings, x
 	local win_pos_x = tonumber(GetVariable("mcvar_window_pos_x")) or 0			-- window position x,y coordinates
 	local win_pos_y = tonumber(GetVariable("mcvar_window_pos_y")) or 0
 	local win_width = tonumber(GetVariable("mcvar_window_width")) or 325			
@@ -183,7 +176,7 @@
 -- [[ Plugin installation ]]
 	function OnPluginInstall()
 		ColourNote("#808080", "", "\n+=================================================================+")
-		ColourNote("#FF3000", "", "   " .. current_sd_version .. " installed at " .. os.time() )
+		ColourNote("#FF3000", "", "   " .. current_sd_version .. " installed at " .. os.date("%m/%d/%y %H:%M:%S", os.time()) )
 		ColourNote("#808080", "", "+=================================================================+\n")
 		windowinfo = movewindow.install (win, miniwin.pos_center, miniwin.create_absolute_location, false, nil, {mouseup=MouseUp, mousedown=LeftClickOnly, dragmove=LeftClickOnly, dragrelease=LeftClickOnly},{x=win_pos_x, y=win_pos_y})
 		create_win()
@@ -927,7 +920,6 @@
 		full_mob_name = qt.mob
 		short_mob_name = gmkw(qt.mob, qt.arid)
 		xcp_index = 0
-		xgq_index = 0
 		qw = { }
 		xgui_RefreshWindow()
 		Execute("xm "..qt.room.."|"..qt.arid)
@@ -940,7 +932,6 @@
 		full_mob_name = qt.mob
 		short_mob_name = gmkw(qt.mob)
 		xcp_index = 0
-		xgq_idex = 0
 		qw = { }
 		xgui_RefreshWindow()				
 		ColourNote("#FF5000", "", "\nYou are on a quest to kill: \n") 
@@ -1230,9 +1221,6 @@
 						-- do nothing
 					else
 						last_mob_sig = mob_sig
-						if player_on_gq == "yes" then
-							level_taken = gq_info_maxlvl
-						end
 						if (level_taken >= min_lvl) and (level_taken <= (max_lvl+10)) then	-- filter results outside sensible level range.
 							table.insert(t, {
 								mob = v.mob,
@@ -3079,277 +3067,10 @@
 	function trim(s)
 		return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)'
 	end
-	
-	
-	
-	
-	function do_gq_info()
-		local id = current_gq_id or ""
-		gq_info_list = {}
-		EnableTrigger("trg_gq_info_quest_name", true)
-		Send("gq info " .. id)
-	end
-
-	function gq_info_quest_name(name, line, wildcards)
-		local id = wildcards.gq_id
-		if (id == current_gq_id) then
-			EnableTrigger("trg_gq_info_level_range", true)
-			EnableTrigger("trg_gq_info_quest_status", true)
-			EnableTrigger("trg_gq_info_targets", true)
-			player_on_gq = "yes"	-- if plugin somehow gets reset, if the id in gq info matches what you just joined, you're probably still in that gq
-		else
-			EnableTrigger("trg_gq_info_level_range", false)
-			EnableTrigger("trg_gq_info_quest_status", false)
-			EnableTrigger("trg_gq_info_targets", false)
-		end
-	end
-	
-	function gq_info_quest_status(name, line, wildcards)
-		local st = wildcards.status
-		if st == "Preparing" then
-			EnableTrigger("trg_gq_info_targets", false)
-		end
-		gq_info_status = st
-		EnableTrigger("trg_gq_info_status", false)
-	end
-	
-	function gq_info_level_range(name, line, wildcards)
-		local min = tonumber(wildcards.minlvl)
-		local max = tonumber(wildcards.maxlvl)
-		gq_info_minlvl = min
-		gq_info_maxlvl = max
-		EnableTrigger("trg_gq_info_level_range", false)
-	end
-	
-	function gq_info_line(name, line, wildcards)
-		local t = gq_info_list
-		local mob = wildcards.mob
-		local qty = wildcards.qty
-		local loc = wildcards.loc
-		local ord = #t+1
-		table.insert(t, { mob=mob, qty=qty, loc=loc, ord=ord } )
-	end
-	
-	function gq_info_end()
-		player_on_gq = "yes"	-- more redundancy.  gq's are a pain
-		local t = gq_info_list
-		--tprint(t)
-		local gq_type = cp_info_type_check(t)
-		print("gq type detection: "..gq_type.."\n")
-		gq_info_type = gq_type
-		SetVariable("mcvar_gq_info_type", gq_type)
-		xgui_RefreshWindow()
-		DoAfterSpecial(0.1, "do_gq_check()", sendto.script)
-	end
-	
-	function do_gq_check()
-		local time_check = os.clock()					-- prevent double cp checks from different plugins
-		if ((time_check - last_cp_check) < 1.0) then
-			return
-		end
-		last_gq_check = time_check
-		gq_check_list = {}
-		EnableTrigger("trg_gq_check_line", true)
-		Send("gq ch")
-	end
-	
-	function gq_check_line(name, line, wildcards)
-		local t = gq_check_list
-		local mob = wildcards.mob
-		local qty = wildcards.qty
-		local loc = wildcards.loc
-		local is_dead = (wildcards.isdead == "" and "no" or "yes")
-		local ord = #t+1
-		table.insert(t, { mob=mob, qty=qty, loc=loc, is_dead=is_dead, ord=ord })
-	end
-	
-	function gq_check_end()
-		player_on_gq = "yes"	-- if you can pull gq check, you must be in the gq.  Adds redundancy in case plugin/data get reset somehow.
-		local t = gq_check_list
-		for i,v in ipairs (t) do
-			v.kw = gmkw(v.mob)
-		end
-		build_cp_target_list(t)
-	end
-	
---	[[ Build gq target list process path ]]
-	function build_gq_target_list(list)
-		local sqla = " SELECT uid as arid, name as areaName " .. "FROM areas " .. "WHERE name = %s " .. "ORDER BY arid ASC "
-		local sqlr = " SELECT r.uid as roomid, r.name as roomName, a.uid as arid, a.name as areaName, 'room' as type " .. "FROM rooms r " .. "INNER JOIN areas a ON r.area = a.uid " .. "WHERE r.name = %s " .. "ORDER BY arid ASC "
-		local t = {}
-		local gq_type = gq_info_type
-		if gq_type == "area" then	-- branch for area cp
-			t = build_area_targets(list, sqla)	
-		elseif gq_type == "room" then	-- branch for room cp
-			t = build_room_targets(list, sqlr, sqla)
-		elseif gq_type == "none" then	-- should never be called but who knows
-			print("gq target builder error - attempt to run while not on campaign")
-			return
-		end
-		for i,v in ipairs (t) do
-			v.kw = gmkw(v.mob, v.arid)
-		end
-		gq_target_list = copytable(t)
-		print_cp_target_links(t)
-		xgui_RefreshWindow()
-	end
-	
-	function gq_has_started(name, line, wildcards)
-		local id = wildcards.gq_id
-		if current_gq_id ~= id then
-			return
-		end
-		local min = wildcards.min_lvl
-		local max = wildcards.max_lvl
-		gq_info_minlvl = min
-		gq_info_maxlvl = max
-		gq_info_status = "Active"
-		SetVariable("mcvar_gq_info_minlvl", min)
-		SetVariable("mcvar_gq_info_maxlvl", max)
-		SetVariable("mcvar_gq_info_status", "Active")
-		if id == current_gq_id then
-			do_gq_info()
-		end
-		gq_started = "yes"
-	end
-	
-	function gq_mob_killed()
-		short_mob_name = -1
-		full_mob_name = -1
-		xcp_retry_stat = 1
-		xgq_index = 0
-		gotoIndex = 1
-		gotoList = {}
-		qw = {}
-		do_gq_check()
-	end
-	
-	function gq_join(name, line, wildcards)
-		current_gq_id = wildcards.gq_id
-		SetVariable("mcvar_current_gq_id", current_gq_id)
-		player_on_gq = "yes"
-	end
-	
-	function player_is_on_gq()
-		player_on_gq = "yes"
-		xgui_RefreshWindow()
-	end
-
-	function player_not_on_gq()
-		EnableTriggerGroup ("trg_gq", false)
-		gq_info_type = "none"
-			SetVariable("mcvar_gq_info_type", "none")
-		gq_info_minlvl = 1
-			SetVariable("mcvar_gq_info_minlvl", "1")
-		gq_info_maxlvl = 300
-			SetVariable("mcvar_gq_info_maxlvl", "300")
-		gq_info_status = "none"
-			SetVariable("mcvar_gq_info_status", "none")
-		current_gq_id = ""
-			SetVariable("mcvar_current_gq_id", "")
-		player_on_gq = "no"
-		gq_info_list = {}
-		gq_check_list = {}
-		gq_target_list = {}
-		xcp_index = 0
-		xgq_index = 0
-		
-		xgui_ClearWindow()
-		if (player_on_cp == "yes") then
-			ColourNote("#FF5000", "#000000", "Reloading your cp targets....")
-			do_cp_check()
-		end
-	end
 
 ]]>
 </script>
 <triggers>
-<!-- GQUEST OPERATIONS-->
-	<trigger match="^Quest Name\.{9}: \[ Global quest # (?<gq_id>\d{1,4}) \]$"
-		script=""
-		name="trg_gq_info_quest_name" group="gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_info_quest_name", false) </send> </trigger>
-			
-	<trigger match="^Quest Status\.{7}: \[ (?<status>\w+) \]$"
-		script=""
-		name="trg_gq_info_quest_status" group="gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_info_quest_status", false) </send> </trigger>	
-
-	<trigger match="^Level range\.{8}: \[\s+(?<minlvl>\d{1,3}) \] - \[\s+(?<maxlvl>\d{1,3}) \]$"
-		script="gq_info_level_range"
-		name="trg_gq_info_level_range" group="gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_info_level_range", false) </send> </trigger>
-			
-	<trigger match="^To complete this quest, you must:$"
-		name="trg_gq_info_targets" group="trg_gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_info_targets", false)
-					EnableTrigger("trg_gq_info_line", true)
-					EnableTrigger("trg_gq_info_end", true) </send> </trigger>
-	
-	<trigger match="^Kill at least (?<qty>[1-3]) \* (?<mob>\w[^(]+) \((?<loc>\S.+)\)\.$"
-		script="gq_info_line"
-		name="trg_gq_info_line" group="trg_gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^(?!Kill at least [1-3] \* \w[^(]+ \(\S.+\)\.)$"
-		script="gq_info_end"
-		name="trg_gq_info_end" group="trg_gq"
-		enabled="n"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_info_line", false)
-					EnableTrigger("trg_gq_info_end", false) </send> </trigger>		
-
-	<trigger match="^You still have to kill (?<qty>[1-3]) \* (?<mob>\w[^(]+) \((?<loc>\S.+?)(?<isdead> - Dead)?\)$"
-		script="gq_check_line"
-		name="trg_gq_check_line" group="trg_gq"
-		enabled="n"	regexp="y" sequence="500" omit_from_output="y" keep_evaluating="y" send_to="12" > 
-			<send>	EnableTrigger("trg_gq_check_end", true) </send> </trigger>
-
-	<trigger match="^(?!You still have to kill [1-3] \* \w[^(]+ \(\S.+?(?: - Dead)?\))$" 
-		script="gq_check_end"
-		name="trg_gq_check_end" group="trg_gq"
-		enabled="n"	regexp="y" sequence="500" omit_from_output="n" keep_evaluating="y" send_to="12" >
-			<send>	EnableTrigger("trg_gq_check_line", false)
-					EnableTrigger("trg_gq_check_end", false) </send> </trigger>
-					
-	<trigger match="^Congratulations, that was one of the GLOBAL QUEST mobs\!$"
-		script="gq_mob_killed"
-		name="trg_gq_mob_killed" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^Global Quest: Global quest # (?<gq_id>\d{1,4}) for levels (?<min_lvl>\d{1,3}) to (?<max_lvl>\d{1,3}) (?:- (?:200|10) or fewer wins only)? has now started\.$"
-		script="gq_has_started"
-		name="trg_gq_has_started" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^You have now joined Global Quest # (?<gq_id>\d{1,4})\. See 'help gquest' for available commands\.$"
-		script="player_is_on_gq"
-		name="trg_player_is_on_gq" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^You are not in a global quest\.$"
-		script="player_not_on_gq"
-		name="trg_player_not_on_gq" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^There are no global quests running\.$"
-		script="player_not_on_gq"
-		name="trg_no_gqs_running" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-		
-	<trigger match="^You were the first to complete this quest\!$"
-		script="player_not_on_gq"
-		name="trg_gq_a_winner_is_you" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>
-
-	<trigger match="^Global Quest: No active players remaining\. Global Quest # (?<gq_id>\d{1,4}) is now over\.$"
-		script="player_not_on_gq"
-		name="trg_gq_no_active_players" group="trg_gq_stat"
-		enabled="y"	regexp="y" sequence="100" keep_evaluating="y" send_to="12" > </trigger>		
-
 <!-- area indexing triggers -->
 	<trigger match="^              \[ Listing all areas in range 1 to 300 \]$"
 		script="area_index_start"
@@ -3479,7 +3200,7 @@
 		script="cp_check_cannot_get_new_cp"
 		enabled="y" regexp="y" sequence="100" keep_evaluating="y" > </trigger>		
 
-	<trigger match="^Note: One or more target names in this (?:campaign|gquest) might be slightly scrambled\.$"
+	<trigger match="^Note: One or more target names in this (?:campaign) might be slightly scrambled\.$"
 		name="trg_cp_check_gag_1" group="trg_cp_2"
 		enabled="y" regexp="y" sequence="100" keep_evaluating="y" omit_from_output="y" send_to="12" > </trigger>	
 
@@ -3625,14 +3346,6 @@
 	<alias	match="^xcp mode(?: (?<option>ht|qw|off))?$"
 			script="xcp_set_mode"
 			enabled="y" regexp="y" sequence="100" ignore_case="y" > </alias>
-<!-- gquest: info, check -->
-	<alias	match="^gq (?:i|info)$"
-			script="do_gq_info"
-			enabled="y" regexp="y" sequence="100" ignore_case="y" send_to="12" > </alias>
-					
-	<alias	match="^gq ch|gq check|gg$"
-			script="do_gq_check"
-			enabled="y" regexp="y" sequence="100" ignore_case="y" send_to="12" > </alias>			
 <!-- movement: xrunto, go, nx, etc.  -->
 	<alias	match="^(?:xrt|xrun|xrunto) (?<loc>.+)$"
 			script="xrun_to"
