@@ -1,4 +1,4 @@
-->See the [Changelog](../blob/master/Changelog.md) for information on Changes<-
+<p align="center">See the [Changelog](../master/Changelog.md) for information on Changes</p>
 
 Search and Destroy was originally created by WinkleWinkle then picked up by Starling when Winkle stopped playing Aardwolf. Starling has made some excellent improvements to S&D and released a version 2. Starling was recently removed from Aardwolf and has threatened to release an illegal bot / Gquest version of S&D. We have created this repository to preserve Starlings work at a point in time where we are confident that there is no malicious or illegal code in the repository as an archive for players. We are grateful for the open source work released by Winkle and Starling but feel like is wise to take this precaution at this point in time.
 
