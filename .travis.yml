@@ -4,8 +4,6 @@ before_deploy:
 
 deploy:
   - provider: releases
-  api_key:
-    secure: "cc44c644996ee86fb523dd4d4a38dd4029f9a865"
   file: ${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
   skip_cleanup: true
   on:
