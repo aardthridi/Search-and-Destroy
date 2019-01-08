@@ -281,7 +281,7 @@ function SNDCls:drawResizeTag()
 	-- Hotspot for resizer.
 	if (WindowHotspotInfo(self.win, "hsResize", 1) == nil) then
 		WindowAddHotspot(self.win, "hsResize", w-rts, h-rts, self.win_width, h, "", "", "mousedown_resize_window", "", "", "", 6, 0)
-		WindowDragHandler(self.win, "hsResize", "SND.ResizeMoveCallback", "ResizeReleaseCallback", 0)
+		WindowDragHandler(self.win, "hsResize", "ResizeMoveCallback", "ResizeReleaseCallback", 0)
 	else
 		WindowMoveHotspot(self.win, "hsResize", w-rts, h-rts, 0, 0)
 	end
@@ -1193,7 +1193,7 @@ function ResizeReleaseCallback()
 	SND:xguiRefreshWindow()
 end
 local lastRefresh = 0
-function SNDCls.ResizeMoveCallback()
+function ResizeMoveCallback()
 	local screen_width = GetInfo(281) - 100
 	local screen_height = GetInfo(280) - 60
 	if GetPluginVariable("c293f9e7f04dde889f65cb90", "lock_down_miniwindows") == "1" then
