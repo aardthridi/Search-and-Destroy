@@ -1,1 +1,12 @@
-language: lua
+language: python
+before_deploy:
+  - tar -zcf ${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz Search_And_Destroy_v2.0.xml
+
+deploy:
+  - provider: releases
+  api_key:
+    secure: "cc44c644996ee86fb523dd4d4a38dd4029f9a865"
+  file: ${TRAVIS_BUILD_DIR}${REPO}-${TRAVIS_TAG}-${TRAVIS_BUILD_NUMBER}.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
