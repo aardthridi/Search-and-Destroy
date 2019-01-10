@@ -1,10 +1,12 @@
-# Search and Destroy v2.0.1 (rel-1.0.7) — 7 Jan 2019
+# Search and Destroy v2.0.1 — 7 Jan 2019
  - Code cleanup (Start)
 
  - Added ability to change the window font
 
  - Added ability to change mob and area name color (Seperate)
 
+ - Added Maximize and Minimize buttons to the titlebar for easy access
+ 
 # Search and Destroy v2.0 (rel-1.0.7) — 15 Oct 2018
 Good morning, this S&D update is mostly internal code changes, fixes, and things like that.  I'm too tired to think of anything witty to say at the moment, so here is what's different:
 
