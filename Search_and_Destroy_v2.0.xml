@@ -204,7 +204,9 @@
 				tdy 	= 0,
 				exec1	= "winMinimize",
 				exec2 	= "winMinimize",
-				tooltip = "Minimize Window" 
+				tooltip = "Minimize Window",
+				bgcolor = 0xffffff,
+				fgcolor = 0x000000
 			})
 			table.insert(SNDCls.button_1_list, {
 				hsid 	= "hsMaximize",
@@ -217,7 +219,9 @@
 				tdy 	= 3,
 				exec1 	= "winMaximize",
 				exec2 	= "winMaximize",
-				tooltip = "Maximize Window"
+				tooltip = "Maximize Window",
+				bgcolor = 0xffffff,
+				fgcolor = 0x000000
 			})
 			return self
 		end
@@ -281,32 +285,36 @@
 			local _self = self
 
 			for i,v in ipairs (SNDCls.button_1_list) do -- draw main action buttons
-				self:drawButton(v.L, v.T, v.W, v.H, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+				self:drawButton(v, 1)
 			end
 			self:drawCplevel(6, 23)		-- add cp level indicator
 			self:drawNoexpCutoff(213, 23)	-- add noexp cutoff indicator
 			Redraw()
 		end
-		function SNDCls:drawButton(L, T, W, H, text, hsName, tooltip, text_dx, text_dy, type)
-			if tonumber(W) == nil then print("invalid W parameter : '" .. W .. "'") end
-			if tonumber(H) == nil then print("invalid H parameter : '" .. H .. "'") end
-			local x,y,w,z = L, T, L+W, T+H
-			local tx,ty = (x+text_dx), (y+text_dy)	-- x and y values for text location
-			local bgcolor = self.win_bgcolor or 0x000000
-			local color_1 = 0xE0E0E0
+		function SNDCls:drawButton(btn, btype, overrides)
+			if type(overrides) == "table" and #overrides > 0 then
+				tprint(overrides)
+				for k,v in pairs(overrides) do
+					btn[k] = v
+				end
+			end
+			local x,y,w,z = btn.L, btn.T, btn.L+btn.W, btn.T+btn.H
+			local tx,ty = (x+btn.tdx), (y+btn.tdy)	-- x and y values for text location
+			local bgcolor = btn.bgcolor or 0x000000
+			local color_1 = btn.fgcolor or 0xE0E0E0
 			local color_2 = 0x808080
 			local mouseover, cancelmouseover, mousedown, cancelmousedown, mouseup = "mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1"
-			if type == 2 then
+			if btype == 2 then
 				bgcolor = 0x000060
 				mouseover, cancelmouseover, mousedown, cancelmousedown, mouseup = "", "", "", "", ""
 			end
 			WindowRectOp(self.win,2, x,y,w,z, bgcolor)													-- Draw background and set color (black)
 			WindowRectOp(self.win,4, x,y,w,z, color_1, color_2)											-- Draw button border (left/top = light grey, right/bottom = darker grey)
-			WindowText(self.win, "button_1", text, tx,ty,w-1,z-1, color_1, false)								-- Draw button text ("button" font, light grey)
-			if (self.win_hotspots[hsName] == nil) then																-- Make button clickable by defining a hotspot
-				self.win_hotspots[hsName] = WindowAddHotspot(self.win, hsName, x, y, w, z,							-- Hotspot name and location info
+			WindowText(self.win, "button_1", btn.text, tx,ty,w-1,z-1, color_1, false)								-- Draw button text ("button" font, light grey)
+			if (self.win_hotspots[btn.hsid] == nil) then																-- Make button clickable by defining a hotspot
+				self.win_hotspots[btn.hsid] = WindowAddHotspot(self.win, btn.hsid, x, y, w, z,							-- Hotspot name and location info
 					mouseover, cancelmouseover, mousedown, cancelmousedown, mouseup,				-- Mouse actions
-					"" .. (tooltip or text), miniwin.cursor_arrow, 0)											-- Tooltip text, cursor shape (hand)
+					"" .. (btn.tooltip or btn.text), miniwin.cursor_arrow, 0)											-- Tooltip text, cursor shape (hand)
 			end
 		end
 		function SNDCls:drawCplevel(left, top)
@@ -1242,7 +1250,7 @@
 		function mousedown_b1(flags, hotspot_id)
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid.."2", "", v.tdx, v.tdy, 2)
+					SND:drawButton(v, 2, { ["hsid"] = v.hsid .. "2"})
 					break
 				end
 			end
@@ -1251,7 +1259,7 @@
 		function mouseup_b1(flags, hotspot_id)	-- when mouse button is released, redraw the buttons to normal appearance.
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+					SND:drawButton(v, 1)
 					if v.exec1 == "winMinimize" then SND:winMinimize()
 					elseif v.exec1 == "winMaximize" then SND:winMaximize()
 					else
@@ -1265,7 +1273,7 @@
 		function cancelmousedown_b1(flags, hotspot_id)
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+					SND:drawButton(v, 1)
 					break
 				end
 			end
