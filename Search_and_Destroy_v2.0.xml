@@ -43,7 +43,8 @@
 				else
 					debugInfo.funcs[info.name] = {
 						cnt = 1,
-						times = 0
+						times = 0,
+						callers = {}
 					}
 				end
 				debugInfo.funcs[info.name].stime = os.clock()
@@ -122,6 +123,7 @@
 				return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)'
 			end
 		}
+		local SND = {}
 		local SNDCls = {}
 		function SNDCls:create()
 			self.current_sd_version = "Search & Destroy v2.0.1"
@@ -173,7 +175,7 @@
 			self.win_pos_y = tonumber(GetVariable("mcvar_window_pos_y")) or 0
 			self.win_width = tonumber(GetVariable("mcvar_window_width")) or 325
 			self.win_width_min = 325
-			self.win_width_max = tonumber(GetVariable("mcvar_window_width_max")) or win_width_min
+			self.win_width_max = tonumber(GetVariable("mcvar_window_width_max")) or self.win_width_min
 			self.win_height = tonumber(GetVariable("mcvar_window_height")) or 280
 			self.win_height_min = 60
 			self.win_height_max = tonumber(GetVariable("mcvar_window_height_max")) or 280
@@ -191,6 +193,32 @@
 			self.itemHotspots = {}
 			self.qw = {}
 			self.init_called = 0
+			table.insert(SNDCls.button_1_list, {
+				hsid 	= "hsMinimize",
+				L 		= self.win_width - 30,
+				T 		= 1,
+				W 		= 15,
+				H 		= 15,
+				text 	= "-",
+				tdx 	= 3,
+				tdy 	= 0,
+				exec1	= "winMinimize",
+				exec2 	= "winMinimize",
+				tooltip = "Minimize Window" 
+			})
+			table.insert(SNDCls.button_1_list, {
+				hsid 	= "hsMaximize",
+				L 		= self.win_width - 15,
+				T 		= 1,
+				W 		= 15,
+				H 		= 15,
+				text 	= "^",
+				tdx 	= 3,
+				tdy 	= 3,
+				exec1 	= "winMaximize",
+				exec2 	= "winMaximize",
+				tooltip = "Maximize Window"
+			})
 			return self
 		end
 		function SNDCls:validState(states)
@@ -245,20 +273,24 @@
 						0x80FFFF, 					-- colour (light yellow)
 						false)						-- not unicode
 			if (self.win_hotspots["hsDrag1"] == nil) then	-- make the title bar draggable
-				self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-1, 16, -- hotspot id, rectangle (left, top, right, bottom)
-							"mouseover", "cancelmouseover", "mousedown_drag", "cancelmousedown", "mouseup_drag",
+				self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-31, 16, -- hotspot id, rectangle (left, top, right, bottom)
+							"mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1",
 							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
 				WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
 			end
+			local _self = self
+
 			for i,v in ipairs (SNDCls.button_1_list) do -- draw main action buttons
-				self:drawButton(v.L, v.T, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+				self:drawButton(v.L, v.T, v.W, v.H, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
 			end
 			self:drawCplevel(6, 23)		-- add cp level indicator
 			self:drawNoexpCutoff(213, 23)	-- add noexp cutoff indicator
 			Redraw()
 		end
-		function SNDCls:drawButton(L, T, text, hsName, tooltip, text_dx, text_dy, type)
-			local x,y,w,z = L, T, L+30, T+25
+		function SNDCls:drawButton(L, T, W, H, text, hsName, tooltip, text_dx, text_dy, type)
+			if tonumber(W) == nil then print("invalid W parameter : '" .. W .. "'") end
+			if tonumber(H) == nil then print("invalid H parameter : '" .. H .. "'") end
+			local x,y,w,z = L, T, L+W, T+H
 			local tx,ty = (x+text_dx), (y+text_dy)	-- x and y values for text location
 			local bgcolor = self.win_bgcolor or 0x000000
 			local color_1 = 0xE0E0E0
@@ -369,6 +401,21 @@
 				WindowMoveHotspot(self.win, "hsResize", w-rts, h-rts, 0, 0)
 			end
 		end
+		function SNDCls:winMinimize()
+			self.win_state = "min"
+			self.win_height = self.win_height_min
+			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
+			self:drawWindowCp()
+			self:winDisplayTargetLinks(self.cp_target_list)
+			self:drawResizeTag()
+			Redraw()
+		end
+		function SNDCls:winMaximize()
+			self.win_state = "max"
+			self.win_height = self.win_height_max
+			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
+			self:xguiRefreshWindow()
+		end
 		function SNDCls:rightClickMenu()
 			menustring = ("Bring To Front|Send To Back|-|Collapse Window|Expand Window|-|Change Font|Mob Name Color|Area Name Color|Background Color")
 			result = WindowMenu (self.win, WindowInfo (self.win, 14), WindowInfo (self.win, 15), menustring)
@@ -377,18 +424,9 @@
 			elseif (result == "Send To Back") then
 				CallPlugin(self.plugin_id_z_order,"dropMe", self.win)
 			elseif (result == "Collapse Window") then
-				self.win_state = "min"
-				self.win_height = self.win_height_min
-				WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
-				self:drawWindowCp()
-				self:winDisplayTargetLinks(self.cp_target_list)
-				self:drawResizeTag()
-				Redraw()
+				self:winMinimize()
 			elseif (result == "Expand Window") then
-				self.win_state = "max"
-				self.win_height = self.win_height_max
-				WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
-				self:xguiRefreshWindow()
+				self:winMaximize()
 			elseif (result == "Change Font") then
 				local wanted_font = utils.fontpicker (self.win_font_name, self.win_font_size) --font dialog
 				if wanted_font then
@@ -569,6 +607,7 @@
 			Redraw()
 		end
 		function SNDCls:xguiClearWindow()
+			if #self.cp_target_list == 0 then return end
 			self:drawWindowCp()
 			self:drawResizeTag()
 			Redraw()
@@ -1199,11 +1238,11 @@
 			["Zangar's Demonic Grotto"] 			= "zangar"
 		}
 
-		local SND = SNDCls:create()
+		SND = SNDCls:create()
 		function mousedown_b1(flags, hotspot_id)
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.text, v.hsid.."2", "", v.tdx, v.tdy, 2)
+					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid.."2", "", v.tdx, v.tdy, 2)
 					break
 				end
 			end
@@ -1212,8 +1251,12 @@
 		function mouseup_b1(flags, hotspot_id)	-- when mouse button is released, redraw the buttons to normal appearance.
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
-					Execute(((bit.band(flags, 0x20) == 0) and v.exec1 or v.exec2))
+					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+					if v.exec1 == "winMinimize" then SND:winMinimize()
+					elseif v.exec1 == "winMaximize" then SND:winMaximize()
+					else
+						Execute(((bit.band(flags, 0x20) == 0) and v.exec1 or v.exec2))
+					end
 					break
 				end
 			end
@@ -1222,7 +1265,7 @@
 		function cancelmousedown_b1(flags, hotspot_id)
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
-					SND:drawButton(v.L, v.T, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
+					SND:drawButton(v.L, v.T, v.H, v.W, v.text, v.hsid, v.tooltip, v.tdx, v.tdy, 1)
 					break
 				end
 			end
