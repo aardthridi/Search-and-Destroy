@@ -32,6 +32,7 @@
 		require "mw"
 		require "serialize"
 		require "wait"
+		require "tprint"
 
 		local debugInfo = { funcs = {}, timers = {} }
 		function returnedHook(why)
@@ -57,11 +58,8 @@
 		end
 		debug.sethook(returnedHook, "cr")
 
-		require "tablefuncs"
-		require "tprint"
-
 		function xgui_debug()
-			for i,v in tableSort(debugInfo.funcs, "times", 0) do
+			for i,v in pairs(debugInfo.funcs) do
 				print(string.format("%-20.20s", i) .. " : " .. string.format("%-6.6s", v.cnt) .. " : " .. v.times)
 			end
 		end
@@ -410,6 +408,7 @@
 			end
 		end
 		function SNDCls:winMinimize()
+			if self.win_state == "min" then return end
 			self.win_state = "min"
 			self.win_height = self.win_height_min
 			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
@@ -419,6 +418,7 @@
 			Redraw()
 		end
 		function SNDCls:winMaximize()
+			if self.win_state == "max" then return end
 			self.win_state = "max"
 			self.win_height = self.win_height_max
 			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
