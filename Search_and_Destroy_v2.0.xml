@@ -1354,6 +1354,9 @@
 			ColourNote("SteelBlue", "", "\n+=================================================================+")
 			ColourNote("SteelBlue", "", "   " .. SND.current_sd_version .. " installed at " .. os.time() )
 			ColourNote("SteelBlue", "", "+=================================================================+\n")
+			if not(IsPluginInstalled("b6eae87ccedd84f510b74714")) then
+				ColourNote("red", "", "aard_GMCP_mapper is required, but not installed!")
+			end
 			if (GetVariable("areaStartRooms") ~= nil) then
 				luastmt = "obj = " .. GetVariable("areaStartRooms")
 				assert (loadstring (luastmt or "")) ()
