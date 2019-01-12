@@ -251,13 +251,11 @@
 			end
 		end
 		function SNDCls:mouseupDrag(flags, hotspot_id)
-			print("mouseupDrag :: " .. hotspot_id .. "")
 			if (hotspot_id == "hsDrag1") then		-- Title bar
 				if bit.band(flags, 0x20) == 0 then	-- left click
 					local nothing
-				else								-- right click
-					self:rightClickMenu()
 				end
+			else
 			end
 		end
 		function SNDCls:drawWindowCp()
@@ -274,7 +272,7 @@
 			if (self.win_hotspots["hsDrag1"] == nil) then	-- make the title bar draggable
 				self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-31, 16, -- hotspot id, rectangle (left, top, right, bottom)
 							"mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1",
-							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_hand, 0)
+							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
 				WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
 			end
 			local _self = self
@@ -422,7 +420,6 @@
 			self:xguiRefreshWindow()
 		end
 		function SNDCls:rightClickMenu()
-			print("rightClickMenu")
 			menustring = ("Bring To Front|Send To Back|-|Collapse Window|Expand Window|-|Change Font|Mob Name Color|Area Name Color|Background Color")
 			result = WindowMenu (self.win, WindowInfo (self.win, 14), WindowInfo (self.win, 15), menustring)
 			if (result == "Bring To Front") then
@@ -551,7 +548,7 @@
 				self.itemHotspots[#self.itemHotspots+1] = "q"
 				local qTextLen = WindowTextWidth(self.win, "cplist_area", self.quest_target.mob)
 				WindowAddHotspot(self.win, "q",
-					16, self.win_target_list_top + self.win_line_space * index, qTextLen, self.win_target_list_top + self.win_line_space * index + 12, -- rectangle
+					16, self.win_target_list_top + self.win_line_space * index, 16 + qTextLen, self.win_target_list_top + self.win_line_space * index + 12, -- rectangle
 					"", "", "", "",-- "mouseover", "cancelmouseover", "mousedown", "cancelmousedown"
 					"target_quest_mob",
 					"",  -- tooltip text
@@ -629,7 +626,10 @@
 		function SNDCls:xguiRefreshWindow()
 			self:drawWindowCp()
 			self:drawResizeTag()
-			quest_target_mob()
+			wait.make(function()
+				Send_GMCP_Packet("request comm.quest")
+				wait.time(1)
+			end)
 			self:winDisplayTargetLinks(self.cp_target_list)
 			Redraw()
 		end
@@ -1267,6 +1267,10 @@
 
 		SND = SNDCls:create()
 		function mousedown_b1(flags, hotspot_id)
+			if hotspot_id == "hsDrag1" and bit.band(flags, miniwin.hotspot_got_rh_mouse) ~= 0 then
+				SND:rightClickMenu()
+				return
+			end
 			for i,v in ipairs (SNDCls.button_1_list) do
 				if (hotspot_id == v.hsid) then
 					SND:drawButton(v, 2, { ["hsid"] = v.hsid .. "2"})
@@ -1521,7 +1525,6 @@
 			SND.short_mob_name = gmkw(qt.mob)
 			SND.xcp_index = 0
 			SND.qw = { }
-			SND:xguiRefreshWindow()
 			ColourNote("#FF5000", "", "\nYou are on a quest to kill: \n")
 			ColourNote("#FF5000", "", "mob : ",
 					   "#00C040", "", qt.mob.." ")
@@ -2929,10 +2932,6 @@
 			if (tonumber(hotspot_id) ~= nil) then
 				Execute("xcp " .. hotspot_id)
 			end
-		end
-
-		function right_click_menu()
-			SND:rightClickMenu()
 		end
 
 		function bringToFront(name, line, wildcards)
