@@ -26,7 +26,7 @@
 	<script>
 	<![CDATA[
 		-- total lines of code: 4143	(at start of merge)
-		-- total lines of code: ____	(at end of merge)
+		-- total lines of code: 3230	(at end of merge)
 		require "gmcphelper"
 		require "movewindow"
 		require "mw"
@@ -128,14 +128,10 @@
 			self.plugin_id_gmcp_handler = "3e7dedbe37e44942dd46d264"		-- easier to remember the var names than the plugin id's
 			self.plugin_id_gmcp_mapper = "b6eae87ccedd84f510b74714"
 			self.plugin_id_z_order = "462b665ecb569efbf261422f"
-			self.currentRoom = {
-				rmid = gmcp("room.info.num"),
-				arid = gmcp("room.info.zone"),
-				maze = (string.match(gmcp("room.info.details"), "maze") == "maze") and "yes" or "no",
-				exits = gmcp("room.info.exits"), }	or { rmid = "-1", arid = "-1", maze = "no", exits = {}
-			}
-			self.previousRoom = { rmid = "-2", arid = "-2", maze = "no", exits = {} }
+			self.currentRoom = {}
+			self.previousRoom = {}
 			self.char_state = "1"
+			self.char_status = {}
 			self.player_on_cp = "no"
 			self.cpstatus_can_I_get_new_cp = "no"
 			self.execute_in_area_array = {}
@@ -255,6 +251,7 @@
 			end
 		end
 		function SNDCls:mouseupDrag(flags, hotspot_id)
+			print("mouseupDrag :: " .. hotspot_id .. "")
 			if (hotspot_id == "hsDrag1") then		-- Title bar
 				if bit.band(flags, 0x20) == 0 then	-- left click
 					local nothing
@@ -277,7 +274,7 @@
 			if (self.win_hotspots["hsDrag1"] == nil) then	-- make the title bar draggable
 				self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-31, 16, -- hotspot id, rectangle (left, top, right, bottom)
 							"mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1",
-							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
+							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_hand, 0)
 				WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
 			end
 			local _self = self
@@ -312,7 +309,7 @@
 			if (self.win_hotspots[btn.hsid] == nil) then																-- Make button clickable by defining a hotspot
 				self.win_hotspots[btn.hsid] = WindowAddHotspot(self.win, btn.hsid, x, y, w, z,							-- Hotspot name and location info
 					mouseover, cancelmouseover, mousedown, cancelmousedown, mouseup,				-- Mouse actions
-					"" .. (btn.tooltip or btn.text), miniwin.cursor_arrow, 0)											-- Tooltip text, cursor shape (hand)
+					"" .. (btn.tooltip or btn.text), miniwin.cursor_hand, 0)											-- Tooltip text, cursor shape (hand)
 			end
 		end
 		function SNDCls:drawCplevel(left, top)
@@ -386,7 +383,7 @@
 			if (self.win_hotspots["hs_noexp"] == nil) then																-- Make button clickable by defining a hotspot
 				self.win_hotspots["hs_noexp"] = WindowAddHotspot(self.win, "hs_noexp", left, top, left+55, top+25,							-- Hotspot name and location info
 					"", "", "", "", "mouseup_noexp",				-- Mouse actions
-					"" .. (tooltip), miniwin.cursor_arrow, 0)											-- Tooltip text, cursor shape (hand)
+					"" .. (tooltip), miniwin.cursor_hand, 0)											-- Tooltip text, cursor shape (hand)
 			end
 		end
 		function SNDCls:drawResizeTag()
@@ -425,6 +422,7 @@
 			self:xguiRefreshWindow()
 		end
 		function SNDCls:rightClickMenu()
+			print("rightClickMenu")
 			menustring = ("Bring To Front|Send To Back|-|Collapse Window|Expand Window|-|Change Font|Mob Name Color|Area Name Color|Background Color")
 			result = WindowMenu (self.win, WindowInfo (self.win, 14), WindowInfo (self.win, 15), menustring)
 			if (result == "Bring To Front") then
@@ -541,14 +539,33 @@
 			if (self.win_state == "min") then
 				return
 			end
-			local index = 0
-			if #list > 0 then
-				WindowText(self.win, "cplist_" .. self.cp_info_type, "Campaign Mobs", 16, self.win_target_list_top + self.win_line_space, 0, 0, 0xffffff, false)
+			local index = 1
+
+			if self.quest_target.mob then
+				WindowText(self.win, "cplist_area", "Quest Target", 16, self.win_target_list_top + self.win_line_space, 0, 0, 0xffffff, false)
+				index = index + 1
 				local s = string.repeats("-", 20)
-				WindowText(self.win, "cplist_" .. self.cp_info_type, s, 16, self.win_target_list_top + self.win_line_space * 2, 0, 0, 0xffffff, false)
+				WindowText(self.win, "cplist_area", s, 16, self.win_target_list_top + self.win_line_space * index, 0, 0, 0xffffff, false)
+				index = index + 1
+				WindowText(self.win, "cplist_area", self.quest_target.mob, 16, self.win_target_list_top + self.win_line_space * index, 0, 0, 0xffffff, false)
+				self.itemHotspots[#self.itemHotspots+1] = "q"
+				local qTextLen = WindowTextWidth(self.win, "cplist_area", self.quest_target.mob)
+				WindowAddHotspot(self.win, "q",
+					16, self.win_target_list_top + self.win_line_space * index, qTextLen, self.win_target_list_top + self.win_line_space * index + 12, -- rectangle
+					"", "", "", "",-- "mouseover", "cancelmouseover", "mousedown", "cancelmousedown"
+					"target_quest_mob",
+					"",  -- tooltip text
+					miniwin.cursor_hand, 0)
+				index = index + 2
+			end
+			if #list > 0 then
+				WindowText(self.win, "cplist_" .. self.cp_info_type, "Campaign Mobs", 16, self.win_target_list_top + self.win_line_space * index, 0, 0, 0xffffff, false)
+				index = index + 1
+				local s = string.repeats("-", 20)
+				WindowText(self.win, "cplist_" .. self.cp_info_type, s, 16, self.win_target_list_top + self.win_line_space * index, 0, 0, 0xffffff, false)
+				--index = index + 1
 			end
 			for i,v in ipairs (list) do
-				index = i
 				if (index * self.win_line_space + self.win_target_list_top) > (self.win_height - 5) then break end		-- Abort loop if printed item would not be visible.
 				local mob = v.mob .. ((v.is_dead == "yes") and " [Dead]" or "")
 				local ar = v.arid
@@ -558,27 +575,27 @@
 				local eventHandler	-- name of function called when you click a link
 				if (ct == "area") then
 					place = string.format("%s", ar)
-					tooltip = "(" .. index .. ") " .. mob .. " - " .. ar
+					tooltip = "(" .. i .. ") " .. mob .. " - " .. ar
 					eventHandler = "win_mouseup_target_link"
 				elseif (ct == "room") then
 					place = string.format("'%s' (%s)", v.roomName, ar)
-					tooltip = "(" .. index .. ") " .. mob .. " - " .. ar
+					tooltip = "(" .. i .. ") " .. mob .. " - " .. ar
 					eventHandler = "win_mouseup_target_link"
 				elseif (ct == "unknown") then	-- area not in mapper db
 					place = string.format("'%s' (unknown)", v.location)
-					tooltip = "(" .. index .. ") " .. mob .. " - " .. v.location
+					tooltip = "(" .. i .. ") " .. mob .. " - " .. v.location
 					eventHandler = ""
 				end
 				local font = "cplist_" .. self.cp_info_type
 				local resize_widgit = 15
 				local targ_list_top = self.win_target_list_top
 				local hsTop = (index * self.win_line_space) + (self.win_line_space * 2)
-				local hsLeft = (index < 10) and 16 or 9
+				local hsLeft = (i < 10) and 16 or 9
 				local hsHeight = (hsTop + 12 + targ_list_top)
 				if (hsHeight < 0) then hsHeight = 0 end
 
 				--local color = ((index == self.xcp_index) and "0x0040FF" or Sutils.convert_color_format(v.color))
-				local text1 = string.format("%s) ", index)
+				local text1 = string.format("%s) ", i)
 				local text1len = WindowTextWidth(self.win, font, text1)
 				local text2 = string.format("%s", mob)
 				local text2len = WindowTextWidth(self.win, font, text2)
@@ -599,18 +616,20 @@
 						hsLength = self.win_width - resize_widgit
 					end
 				end
-				self.itemHotspots[#self.itemHotspots+1] = index
-				WindowAddHotspot(self.win, index,
+				self.itemHotspots[#self.itemHotspots+1] = i
+				WindowAddHotspot(self.win, i,
 					hsLeft, hsTop + self.win_target_list_top, hsLength, hsHeight, -- rectangle
 					"", "", "", "",-- "mouseover", "cancelmouseover", "mousedown", "cancelmousedown"
 					eventHandler,
 					"",  -- tooltip text
-					miniwin.cursor_arrow, 0)
+					miniwin.cursor_hand, 0)
+				index = index + 1
 			end
 		end
 		function SNDCls:xguiRefreshWindow()
 			self:drawWindowCp()
 			self:drawResizeTag()
+			quest_target_mob()
 			self:winDisplayTargetLinks(self.cp_target_list)
 			Redraw()
 		end
@@ -1286,7 +1305,7 @@
 
 			SND.win_hotspots["hsDrag1"] = WindowAddHotspot(SND.win, "hsDrag1", 0, 0, w-1, 16, -- hotspot id, rectangle (left, top, right, bottom)
 						"mouseover", "cancelmouseover", "mousedown_drag", "cancelmousedown", "mouseup_drag",
-						"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
+						"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_hand, 0)
 			WindowDragHandler(SND.win, "hsDrag1", "dragmove", "", 0)
 			SND:xguiRefreshWindow()
 		end
@@ -1327,14 +1346,13 @@
 		end
 
 
-
-
-
 		--	[[ Plugin broadcast/receive process ]]
 		function OnPluginBroadcast(msg, id, name, text)
 			if (id == SND.plugin_id_gmcp_handler) then	-- check to ensure data is coming from GMCP handler and not something else
 				if (text == "char.status") then		-- get current character status
-					SND.char_state = gmcp("char.status.state")
+					local s = gmcp("char.status")
+					SND.char_state = s.state
+					SND.char_status = s
 				elseif (text == "room.info") then	-- get current/previous room info
 					local r = gmcp("room.info")
 					r.maze = (string.match(r.details, "maze") == "maze") and "yes" or "no"
@@ -1419,7 +1437,7 @@
 
 		function gmkw(s, a)	-- guess mob keywords
 			if not s then return -1 end
-			local ar = a or gmcp("room.info.zone") or -1
+			local ar = a or SND.currentRoom.arid or -1
 			local omit = gmkw_omit
 			local s1 = {}
 			for w in string.gmatch(string.lower(s), "[^ ]+") do
@@ -1515,42 +1533,45 @@
 		end
 
 		function quest_target_gmcp(q)
-				-- quest status changed by taking new quest, killing mob, completing quest, or waiting/time running out.
-				if (q.action == "killed") then	-- you've just killed the target
-					SND.quest_target.qstat = "3"
-				elseif (q.action == "start") then	-- get quest info when taking new quest, or before you kill the target
-					SND.quest_target = { qstat = "2", mob = q.targ,	areaName = q.area, arid = SND.areaNameXref[q.area], room = q.room }
-					start_new_quest()
-				elseif (q.action == "comp") or (q.action == "fail") or (q.action == "reset") then -- must wait if you q complete, q fail, or qreset.
-					SND.quest_target = { qstat="1"}
-					SND.short_mob_name = ""
-					SND.gotoIndex = 0
-					SND.gotoList = {}
-					SND.qw = {}
-				elseif (q.action == "ready") or (q.action == "timeout") then -- can take new quest immediately
-					SND.quest_target = { qstat="0"}
+			-- quest status changed by taking new quest, killing mob, completing quest, or waiting/time running out.
+			if (q.action == "killed") then	-- you've just killed the target
+				SND.quest_target.qstat = "3"
+				SND:xguiRefreshWindow()
+			elseif (q.action == "start") then	-- get quest info when taking new quest, or before you kill the target
+				SND.quest_target = { qstat = "2", mob = q.targ,	areaName = q.area, arid = SND.areaNameXref[q.area], room = q.room }
+				start_new_quest()
+				SND:xguiRefreshWindow()
+			elseif (q.action == "comp") or (q.action == "fail") or (q.action == "reset") then -- must wait if you q complete, q fail, or qreset.
+				SND.quest_target = { qstat="1"}
+				SND.short_mob_name = ""
+				SND.gotoIndex = 0
+				SND.gotoList = {}
+				SND.qw = {}
+				SND:xguiRefreshWindow()
+			elseif (q.action == "ready") or (q.action == "timeout") then -- can take new quest immediately
+				SND.quest_target = { qstat="0"}
 
-				-- in all of these, the action is "status"
-				elseif (q.action == "status" and q.target == "killed") then	-- do not confuse q.target with q.targ above!
-					SND.quest_target.qstat = "3"
-					ColourNote("#FF5000", "", "\nSearch and Destroy: You have already killed your quest target!\n")
-				elseif (q.action == "status" and q.targ and q.timer) then
-					SND.quest_target = { qstat="2", mob = q.targ, areaName = q.area, arid = SND.areaNameXref[q.area], room = q.room }
-					target_quest_mob()
-				elseif (q.action == "status" and (q.wait)) then -- off quest, must wait before taking new
-					SND.quest_target = { qstat="1"}
-					ColourNote("#FF5000", "", "\nSearch and Destroy: Not on quest - must wait before requesting new.\n")
-				elseif (q.action == "status" and q.status == "ready") then -- off quest, can get new quest now
-					SND.quest_target = { qstat="0"}
-					ColourNote("#FF5000", "", "\nSearch and Destroy: Not on quest - can request new quest immediately. \n")
-				end
+			-- in all of these, the action is "status"
+			elseif (q.action == "status" and q.target == "killed") then	-- do not confuse q.target with q.targ above!
+				SND.quest_target.qstat = "3"
+				ColourNote("#FF5000", "", "\nSearch and Destroy: You have already killed your quest target!\n")
+			elseif (q.action == "status" and q.targ and q.timer) then
+				SND.quest_target = { qstat="2", mob = q.targ, areaName = q.area, arid = SND.areaNameXref[q.area], room = q.room }
+				target_quest_mob()
+			elseif (q.action == "status" and (q.wait)) then -- off quest, must wait before taking new
+				SND.quest_target = { qstat="1"}
+				ColourNote("#FF5000", "", "\nSearch and Destroy: Not on quest - must wait before requesting new.\n")
+			elseif (q.action == "status" and q.status == "ready") then -- off quest, can get new quest now
+				SND.quest_target = { qstat="0"}
+				ColourNote("#FF5000", "", "\nSearch and Destroy: Not on quest - can request new quest immediately. \n")
+			end
 		end
 
 		--	[[ general cp status process / functions ]]
 		function player_start_new_cp()	-- called by line "good luck on your campaign" when starting new cp
 			SND.player_on_cp = "yes"
 			SND.cpstatus_can_I_get_new_cp = "no"
-			SND.cp_info_level = gmcp("char.status.level")
+			SND.cp_info_level = SND.char_status.level
 			if (SND.noexp_onoff == "on") and (SND.auto_noexp_tnl > 0) then
 				ColourNote("#FF5000", "#000000", "Search and Destroy: Turning 'noexp' OFF (you have started a new CP)")
 				set_noexp("off")
@@ -1608,7 +1629,6 @@
 
 	--	[[ "cp info" process path ]]
 		function cp_info_start()
-			SND.currentRoom = gmcp("room.info")
 			SND.cp_info_targets = {}
 			SendNoEcho("cp info")
 		end
@@ -1922,8 +1942,8 @@
 				return
 			end
 			local cpmob = SND.cp_target_list[index]
-			local roomid = gmcp("room.info.num")
-			local ar = gmcp("room.info.zone")
+			local roomid = SND.currentRoom.rmid
+			local ar = SND.currentRoom.arid
 			local mode = SND.xcp_action_mode
 			SND.gotoList = {}
 			SND.gotoIndex = 1
@@ -1995,7 +2015,7 @@
 				ColourNote("#FF5000", "", "Goto next (nx) aborted - No data yet.")
 				return
 			end
-			if (tonumber(SND.next_room) == tonumber(gmcp("room.info.num"))) and (SND.gotoIndex < #SND.gotoList) then
+			if (tonumber(SND.next_room) == tonumber(SND.currentRoom.rmid)) and (SND.gotoIndex < #SND.gotoList) then
 				SND.gotoIndex = SND.gotoIndex + 1
 			end
 			if SND.gotoList[SND.gotoIndex] then
@@ -2013,7 +2033,7 @@
 				ColourNote("#FF5000", "", "Goto previous (nx-) aborted - No data yet.")
 				return
 			end
-			if (tonumber(SND.next_room) == tonumber(gmcp("room.info.num"))) and (SND.gotoIndex > 1) then
+			if (tonumber(SND.next_room) == tonumber(SND.currentRoom.rmid)) and (SND.gotoIndex > 1) then
 				SND.gotoIndex = SND.gotoIndex - 1
 			end
 			if SND.gotoList[SND.gotoIndex] then
@@ -2417,7 +2437,7 @@
 		end
 
 		function auto_hunt_move(direction)
-			local r = gmcp("room.info")
+			local r = SND.currentRoom
 			local dir = SND.dir_map[direction]
 			if (r == nil) then	-- don't know our gmcp exits, so just go with it
 				Send(dir)
@@ -2469,9 +2489,9 @@
 
 		function noexp_can_get_new_cp()		-- called by line 'You may take campaign this level.' in 'cp check'
 			if (SND.auto_noexp_tnl > 0) then	-- if auto_noexp_tnl is greater than zero, then auto-noexp is on.
-				local level = tonumber(gmcp("char.status.level"))
+				local level = tonumber(SND.char_status.level)
 				if (level < 200) then
-					local tnl = tonumber(gmcp("char.status.tnl"))
+					local tnl = tonumber(SND.char_status.tnl)
 					if (tnl < SND.auto_noexp_tnl) and (SND.noexp_onoff == "off") then		-- tnl less than set point and noexp is off --> turn that shit on
 						set_noexp("on")
 						ColourNote("#FF5000", "", "\nSearch and Destroy: Turning 'noexp' ON (Your TNL is less than " .. SND.auto_noexp_tnl .. ")")
@@ -2493,7 +2513,7 @@
 
 		function noexp_must_level_new_cp()	-- called by trigger:  You must level to get a new campaign
 			if (SND.auto_noexp_tnl > 0) then
-				local level = tonumber(gmcp("char.status.level"))
+				local level = tonumber(SND.char_status.level)
 				if (level < 200) then
 					if (SND.noexp_onoff == "on") and (SND.player_on_cp == "yes") then
 						ColourNote("#FF5000", "#000000", "Search and Destroy: Turning noexp OFF (must level to get new cp)")
@@ -2509,7 +2529,7 @@
 		end
 
 		function mobkill_awards_xp(name, line, wildcards)	-- called when mob kill awards xp
-			local level = tonumber(gmcp("char.status.level"))
+			local level = tonumber(SND.char_status.level)
 			if (SND.auto_noexp_tnl > 0) then
 				if (level < 200) then
 					check_current_tnl()
@@ -2524,7 +2544,7 @@
 		end
 
 		function check_current_tnl()	-- called via timer set by function mobkill_awards_xp
-			local tnl = tonumber(gmcp("char.status.tnl"))
+			local tnl = tonumber(SND.char_status.tnl)
 			if (SND.cpstatus_can_I_get_new_cp == "yes") then
 				if (tnl < SND.auto_noexp_tnl) then
 					if (SND.noexp_onoff == "off") then
@@ -2619,7 +2639,7 @@
 		local is_vidblain_area_sql = "SELECT area " .. "FROM rooms " .. "WHERE uid = %s "
 		function is_vidblain_area(roomid)
 			if (SND.xset_vidblain_onoff == "off") then	return false end
-			local level = tonumber(gmcp("char.status.level")) + 10 * tonumber(gmcp("char.base.tier"))
+			local level = tonumber(SND.char_status.level) + 10 * tonumber(gmcp("char.base.tier"))
 			if (level >= SND.xset_vidblain_level) then return false	end
 
 			local worldPath = GetInfo(66) .. Trim(Sutils.sanitize_filename(WorldName()))
