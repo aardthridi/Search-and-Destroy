@@ -9,6 +9,8 @@
 
  - Added verification that aard_GMCP_mapper plugin was installed during S&D startup
  
+ - Added Quest target to window
+ 
 # Search and Destroy v2.0 (rel-1.0.7) — 15 Oct 2018
 Good morning, this S&D update is mostly internal code changes, fixes, and things like that.  I'm too tired to think of anything witty to say at the moment, so here is what's different:
 
