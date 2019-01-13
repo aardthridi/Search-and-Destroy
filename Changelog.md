@@ -11,6 +11,8 @@
  
  - Added Quest target to window
  
+ - Area indexxing will no longer happen every load. It will store the data as areas do not change often. (type 'area keywords 1 300' to manually update)
+ 
 # Search and Destroy v2.0 (rel-1.0.7) — 15 Oct 2018
 Good morning, this S&D update is mostly internal code changes, fixes, and things like that.  I'm too tired to think of anything witty to say at the moment, so here is what's different:
 
