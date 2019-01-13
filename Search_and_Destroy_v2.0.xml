@@ -488,9 +488,7 @@
 				end)
 			elseif (self.init_called == 1) then
 				self.init_called = 2
-				print("area_range = " .. #self.area_range)
 				if next(self.area_range) == nil then
-					print("No area range!")
 					SendNoEcho("area keywords 1 300")
 				else
 					Send_GMCP_Packet("request room")
