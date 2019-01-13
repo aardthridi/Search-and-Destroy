@@ -253,7 +253,7 @@
 		function SNDCls:mouseupDrag(flags, hotspot_id)
 			if (hotspot_id == "hsDrag1") then		-- Title bar
 				if bit.band(flags, 0x20) == 0 then	-- left click
-					local nothing
+					self:xguiRefreshWindow()
 				end
 			else
 			end
@@ -278,6 +278,11 @@
 			local _self = self
 
 			for i,v in ipairs (SNDCls.button_1_list) do -- draw main action buttons
+				if (v.hsid == "hsMinimize") then
+					v.L = self.win_width - 30
+				elseif (v.hsid == "hsMaximize") then
+					v.L = self.win_width - 15
+				end
 				self:drawButton(v, 1)
 			end
 			self:drawCplevel(6, 23)		-- add cp level indicator
@@ -286,7 +291,6 @@
 		end
 		function SNDCls:drawButton(btn, btype, overrides)
 			if type(overrides) == "table" and #overrides > 0 then
-				tprint(overrides)
 				for k,v in pairs(overrides) do
 					btn[k] = v
 				end
@@ -481,7 +485,7 @@
 				return
 			end
 			if (self.init_called == 0) then
-				suspend_page_size()
+				self.init_called = 1
 				wait.make(function()
 					wait.time(1)
 					self:initPlugin()
@@ -493,7 +497,7 @@
 				else
 					Send_GMCP_Packet("request room")
 					Execute("cp info")
-					DoAfterSpecial(0.5, "xset resume page size", sendto.execute)
+					--DoAfterSpecial(0.5, "xset resume page size", sendto.execute)
 				end
 			end
 		end
@@ -604,13 +608,20 @@
 				local text2len = WindowTextWidth(self.win, font, text2)
 				local textseplen = WindowTextWidth(self.win, font, " - ")
 				local text3 = string.format("%s", place)
+				local text3len = WindowTextWidth(self.win, font, text3)
+				local text4 = ""
+				local text4len = 0
+				if v.is_dead == "yes" then
+					text4 = " [Dead]"
+					text4len = WindowTextWidth(self.win, font, text4)
+				end
 
 				WindowText(self.win, font, text1, hsLeft, hsTop + targ_list_top - 5, 0, 0, Sutils.convert_color_format(v.color), false)
 				WindowText(self.win, font, text2, hsLeft + text1len, hsTop + targ_list_top - 5, 0, 0, self.mob_name_color)
 				WindowText(self.win, font, " - ", hsLeft + text1len + text2len, hsTop + targ_list_top - 5, 0, 0, Sutils.convert_color_format(v.color), false)
 				WindowText(self.win, font, text3, hsLeft + text1len + text2len + textseplen, hsTop + targ_list_top - 5, 0, 0, self.area_name_color, false)
-
-				local hsLength = (hsLeft + text1len + text2len + WindowTextWidth(self.win, font, " - "))
+				WindowText(self.win, font, text4, hsLeft + text1len + text2len + textseplen + text3len, hsTop + targ_list_top - 5, 0, 0, Sutils.convert_color_format(v.color), false)
+				local hsLength = (hsLeft + text1len + text2len + text3len + textseplen + text4len)
 				if hsLength < 0 then
 					heLength = 0
 				end
@@ -1804,7 +1815,7 @@
 					end
 
 					local found = false
-					for z,x in pairs(self.area_range) do
+					for z,x in pairs(SND.area_range) do
 						if x.area == row.areaName then
 							found = z
 							break
@@ -1834,10 +1845,10 @@
 									type = ((v.is_dead == "no") and "room" or "area"),	-- deals with dead mobs when area contains roomnames same as area name e.g. Aardington Estate
 									index = #t+1,
 									ord = v.ord } )
-							else	-- area containing roomname is outside level ranges
-								local link = string.format(" **Ignoring due to level : %s in '%s' (%s) [%s-%s]", v.mob, row.roomName, row.arid, min_lvl, max_lvl)
-								Hyperlink("xm move " .. row.roomid, link, "Move to room " .. row.roomid, "#FF0000", "", 0)
-								print("")
+							--else	-- area containing roomname is outside level ranges
+								--local link = string.format(" **Ignoring due to level : %s in '%s' (%s) [%s-%s]", v.mob, row.roomName, row.arid, min_lvl, max_lvl)
+								--Hyperlink("xm move " .. row.roomid, link, "Move to room " .. row.roomid, "#FF0000", "", 0)
+								--print("")
 							end
 						end
 						lastMobSignature = mobSignature
@@ -1867,7 +1878,7 @@
 		function print_cp_target_links(t)
 			local list = t
 			lastMobSignature = ""	--reset signature for next search
-				ColourNote("Gray", "", "\n------------------------------------------------------------------------------------------")
+			ColourNote("Gray", "", "\n------------------------------------------------------------------------------------------")
 			if (#t == 0) then
 				ColourNote("#FF5000", "", "   No campaign items to show.  (If this appears to be a bug, do 'areas 1 300 keywords')")
 				return
@@ -1895,8 +1906,8 @@
 				end
 				print("")
 			end
-				ColourNote("Gray", "", "------------------------------------------------------------------------------------------")
-				ColourNote("Gray", "", "Type 'xcp <index>' or click link to go to that target.")
+			ColourNote("Gray", "", "------------------------------------------------------------------------------------------")
+			ColourNote("Gray", "", "Type 'xcp <index>' or click link to go to that target.")
 		end
 
 		-- [[ "xcp" command ]]
