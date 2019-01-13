@@ -488,7 +488,15 @@
 				end)
 			elseif (self.init_called == 1) then
 				self.init_called = 2
-				SendNoEcho("area keywords 1 300")
+				print("area_range = " .. #self.area_range)
+				if next(self.area_range) == nil then
+					print("No area range!")
+					SendNoEcho("area keywords 1 300")
+				else
+					Send_GMCP_Packet("request room")
+					Execute("cp info")
+					DoAfterSpecial(0.5, "xset resume page size", sendto.execute)
+				end
 			end
 		end
 		function SNDCls:setSpeed(speed)
@@ -516,7 +524,7 @@
 					areaName = "The Darkside of the Fractured Lands"
 				end
 				if not(self.areaDefaultStartRooms[arid].noquest) then
-					self.area_range[areaName] = { arid = arid, min = minLvl, max = maxLvl, lock = levelLock }
+					table.insert(self.area_range, { area = areaName, arid = arid, min = minLvl, max = maxLvl, lock = levelLock })
 				end
 			else
 				ColourNote("#802800", "", "*** Missing default start room - " .. areaName)
@@ -1376,13 +1384,18 @@
 			ColourNote("SteelBlue", "", "\n+=================================================================+")
 			ColourNote("SteelBlue", "", "   " .. SND.current_sd_version .. " installed at " .. os.time() )
 			ColourNote("SteelBlue", "", "+=================================================================+\n")
-			if not(IsPluginInstalled("b6eae87ccedd84f510b74714")) then
+			if not(IsPluginInstalled(SND.plugin_id_gmcp_mapper)) then
 				ColourNote("red", "", "aard_GMCP_mapper is required, but not installed!")
 			end
 			if (GetVariable("areaStartRooms") ~= nil) then
 				luastmt = "obj = " .. GetVariable("areaStartRooms")
 				assert (loadstring (luastmt or "")) ()
 				SND.areaStartRooms = obj
+			end
+			if GetVariable("area_range") ~= nil then
+				luastmt = "obj = " .. GetVariable("area_range")
+				assert(loadstring(luastmt or ""))()
+				SND.area_range = obj
 			end
 			SND:createWin()
 			SND:initPlugin()
@@ -1402,8 +1415,9 @@
 		end
 
 		function area_index_end(name, line, wildcards)
-			Send_GMCP_Packet("request room")
 			ColourNote("#FF5000", "", "\n*** Area levels indexed!")
+			SetVariable('area_range', serialize.save_simple(SND.area_range))
+			Send_GMCP_Packet("request room")
 			Execute("cp info")
 			DoAfterSpecial(0.5, "xset resume page size", sendto.execute)
 		end
@@ -1791,11 +1805,18 @@
 						print("area name missing from row")
 					end
 
-					if (SND.area_range[row.areaName] == nil) then	-- noquest areas never contain targets, so don't include them in results.
+					local found = false
+					for z,x in pairs(self.area_range) do
+						if x.area == row.areaName then
+							found = z
+							break
+						end
+					end
+					if (found == false) then	-- noquest areas never contain targets, so don't include them in results.
 						-- do nothing
 					else
-						local min_lvl = (SND.area_range[row.areaName].min) or 1
-						local max_lvl = (SND.area_range[row.areaName].max) or 300
+						local min_lvl = (SND.area_range[found].min) or 1
+						local max_lvl = (SND.area_range[found].max) or 300
 						local vmax = 0
 						local vmin = 0
 						results_found = true
@@ -2976,7 +2997,6 @@
 				SetVariable("mcvar_xgui_window_onoff", "off")
 			end
 		end
-
 
 		function xset_line_space(name, line, wildcards)
 			local x = tonumber(wildcards.space)
