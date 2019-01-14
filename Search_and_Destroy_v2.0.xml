@@ -266,7 +266,7 @@
 			WindowRectOp (self.win, 1, 1, 17, -1, -1, 0x000000, 15)						-- Draw colored perimeter line.
 			WindowText (self.win, "window_title", 		-- draw the window title text and set its color
 						self.current_sd_version,			-- window title text
-						5, 0, 255, 15,				-- left (x1), top (y1), right (x2), bottom (y2) values for window title text
+						5, 0, self.win_width - 31, 15,				-- left (x1), top (y1), right (x2), bottom (y2) values for window title text
 						0x80FFFF, 					-- colour (light yellow)
 						false)						-- not unicode
 			if (self.win_hotspots["hsDrag1"] == nil) then	-- make the title bar draggable
@@ -275,7 +275,6 @@
 							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
 				WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
 			end
-			local _self = self
 
 			for i,v in ipairs (SNDCls.button_1_list) do -- draw main action buttons
 				if (v.hsid == "hsMinimize") then
@@ -283,6 +282,8 @@
 				elseif (v.hsid == "hsMaximize") then
 					v.L = self.win_width - 15
 				end
+				WindowDeleteHotspot(self.win, v.hsid)
+				self.win_hotspots[v.hsid] = nil
 				self:drawButton(v, 1)
 			end
 			self:drawCplevel(6, 23)		-- add cp level indicator
@@ -407,7 +408,9 @@
 			end
 		end
 		function SNDCls:winMinimize()
-			if self.win_state == "min" then return end
+			if self.win_state == "min" then
+				return
+			end
 			self.win_state = "min"
 			self.win_height = self.win_height_min
 			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
@@ -417,7 +420,9 @@
 			Redraw()
 		end
 		function SNDCls:winMaximize()
-			if self.win_state == "max" then return end
+			if self.win_state == "max" then
+				return
+			end
 			self.win_state = "max"
 			self.win_height = self.win_height_max
 			WindowResize(self.win, self.win_width, self.win_height, ColourNameToRGB("black"))
@@ -1324,10 +1329,8 @@
 			local w = SND.win_width
 			local h = SND.win_height
 
-			SND.win_hotspots["hsDrag1"] = WindowAddHotspot(SND.win, "hsDrag1", 0, 0, w-1, 16, -- hotspot id, rectangle (left, top, right, bottom)
-						"mouseover", "cancelmouseover", "mousedown_drag", "cancelmousedown", "mouseup_drag",
-						"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_hand, 0)
-			WindowDragHandler(SND.win, "hsDrag1", "dragmove", "", 0)
+			WindowDeleteHotspot(SND.win, "hsDrag1")
+			SND.win_hotspots["hsDrag1"] = nil
 			SND:xguiRefreshWindow()
 		end
 		local lastRefresh = 0
