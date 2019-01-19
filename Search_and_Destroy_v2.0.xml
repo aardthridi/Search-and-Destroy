@@ -269,12 +269,13 @@
 						5, 0, self.win_width - 31, 15,				-- left (x1), top (y1), right (x2), bottom (y2) values for window title text
 						0x80FFFF, 					-- colour (light yellow)
 						false)						-- not unicode
-			if (self.win_hotspots["hsDrag1"] == nil) then	-- make the title bar draggable
-				self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-31, 16, -- hotspot id, rectangle (left, top, right, bottom)
-							"mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1",
-							"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
-				WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
+			if self.win_hotspots["hsDrag1"] then
+				WindowDeleteHotspot(self.win, "hsDrag1")
 			end
+			self.win_hotspots["hsDrag1"] = WindowAddHotspot(self.win, "hsDrag1", 0, 0, self.win_width-31, 16, -- hotspot id, rectangle (left, top, right, bottom)
+				"mouseover", "cancelmouseover", "mousedown_b1", "cancelmousedown_b1", "mouseup_b1",
+				"Left click = Drag title bar to move\nRight click = Send window to front/back", miniwin.cursor_arrow, 0)
+			WindowDragHandler(self.win, "hsDrag1", "dragmove", "", 0)
 
 			for i,v in ipairs (SNDCls.button_1_list) do -- draw main action buttons
 				if (v.hsid == "hsMinimize") then
